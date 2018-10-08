@@ -119,6 +119,10 @@ An array of contributors, with properties such as:
 -   `github`: the GitHub account of the contributor, with or without an `@`.
 -   `twitter`: the Twitter account of the contributor, with or without an `@`.
 
+### `options.appendIfMissing`
+
+Optional. Defaults to **false**. If set to `true` it will append the table if no `Contributors` section header is found.
+
 ## Contributors
 
 | Name             | GitHub                                              | Twitter                                               |

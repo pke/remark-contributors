@@ -22,6 +22,26 @@ const packageExpected = fs.readFileSync('fixtures/package-expected.md', 'utf8');
 const customFixture = fs.readFileSync('fixtures/custom.md', 'utf8');
 const customExpected = fs.readFileSync('fixtures/custom-expected.md', 'utf8');
 
+test('remark-contributors with package.json relatedProjects field', t => {
+  const processor = remark().use(plugin, {
+    appendIfMissing: true,
+    sections: [{
+      header: 'Related Projects', property: 'relatedProjects'
+    }]
+  });
+
+  const fixture = fs.readFileSync('fixtures/relatedProjects-basic.md', 'utf8');
+  const expectedFixture = fs.readFileSync('fixtures/relatedProjects-basic-expected.md', 'utf8');
+
+  const actual = processor.processSync(fixture).toString().trim();
+  const expect = expectedFixture.trim();
+  t.equal(actual, expect, 'Add related projects section if none exists');
+  if (actual !== expect) {
+    console.error(diff.diffChars(expect, actual));
+  }
+  t.end();
+});
+
 test('remark-contributors with package.json contributors field', t => {
   const processor = remark().use(plugin, {
     appendIfMissing: true

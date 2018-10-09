@@ -45,5 +45,11 @@
   "homepage": "https://github.com/hughsk/remark-contributors",
   "bugs": {
     "url": "https://github.com/hughsk/remark-contributors/issues"
-  }
+  },
+  "relatedProjects": [
+    { "name": "remark",
+      "url": "http://remark.js.org",
+      "description": "Markdown processor powered by **plugins**"
+    }
+  ]
 }

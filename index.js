@@ -7,36 +7,59 @@ module.exports = contributorTableAttacher;
 
 function contributorTableAttacher(opts) {
   opts = opts || {};
-  opts.contributors = opts.contributors || [];
   if (typeof opts.appendIfMissing === "undefined") {
     opts.appendIfMissing = false
   };
 
+  opts.sections = opts.sections || [{
+    header: "Contributors",
+    property: "contributors"
+  }];
+
+  opts.sections.forEach(section => {
+    if (section.header) {
+      const property = section.property;
+      if (!opts[property]) {
+        opts[property] = [];
+      };
+    };
+  });
+
   return function contributorTableTransformer(root, file) {
-    const heading = getHeadingIndex(root.children);
-    if (!heading && !opts.appendIfMissing) {
-      return;
-    }
-    const children = root.children;
     let pack = {};
 
     try {
       pack = require(path.resolve(file.cwd, 'package.json'));
     } catch (err) {}
 
+    opts.sections.forEach(function(section) {
+      if (section.header) {
+        process(section, pack, root);
+      }
+    });
+  };
+
+  function process(section, pack, root) {
+    const sectionProperty = section.property;
+    const heading = getHeadingIndex(section.header, root.children);
+    if (!heading && !opts.appendIfMissing) {
+      return;
+    }
+    const children = root.children;
+    
     const title = {
       type: 'heading',
       depth: 2,
       children: [
-        {type: 'text', value: 'Contributors'}
+        {type: 'text', value: section.header}
       ]
     };
 
-    // Fallback to "contributors" defined in package.json if it exists
-    if (opts.contributors.length === 0 && pack.contributors) {
-      // Convert "contributors" in package.json to an array of objects
+    // Fallback to "sectionName" defined in package.json if it exists
+    if (opts[sectionProperty].length === 0 && pack[sectionProperty]) {
+      // Convert "sectionName" in package.json to an array of objects
       // each with `name`, `email`, and `url` if available
-      opts.contributors = pack.contributors.map(contrib => {
+      opts[sectionProperty] = pack[sectionProperty].map(contrib => {
         if (typeof contrib === 'string') {
           contrib = parse(contrib);
         }
@@ -44,14 +67,14 @@ function contributorTableAttacher(opts) {
       });
     }
 
-    if (opts.contributors.length === 0) {
+    if (opts[sectionProperty].length === 0) {
       return;
     }
 
     let tableHeaders = [];
 
     // Traverse through all contributors to get all the unique table headers
-    opts.contributors.forEach(contrib => {
+    opts[sectionProperty].forEach(contrib => {
       Object.keys(contrib).forEach(original => {
         const key = original.toLowerCase();
 
@@ -80,6 +103,10 @@ function contributorTableAttacher(opts) {
           original = 'Twitter';
         }
 
+        if (key === 'description') {
+          original = 'Description';
+        }
+
         if (tableHeaders.indexOf(original) === -1) {
           tableHeaders.push(original);
         }
@@ -87,7 +114,7 @@ function contributorTableAttacher(opts) {
     });
 
     // Format contributor field names properly and lowercased
-    opts.contributors = opts.contributors.map(contrib => {
+    opts[sectionProperty] = opts[sectionProperty].map(contrib => {
       Object.keys(contrib).forEach(key => {
         // Store the value of the key
         const value = contrib[key];
@@ -137,7 +164,7 @@ function contributorTableAttacher(opts) {
       })
     };
 
-    const tableRows = opts.contributors.map(contrib => {
+    const tableRows = opts[sectionProperty].map(contrib => {
       // Go through each header in the tableHeaders
       // and then add them, in order, respective to contributor
       const children = tableHeaders.map(header => {
@@ -243,7 +270,7 @@ function contributorTableAttacher(opts) {
   // in the README. If one isn't found, will simply
   // return `null`.
   //
-  function getHeadingIndex(children) {
+  function getHeadingIndex(name, children) {
     for (let i = 0; i < children.length; i++) {
       if (children[i].type !== 'heading') {
         continue;
@@ -255,7 +282,7 @@ function contributorTableAttacher(opts) {
         .replace(/\s+/g, ' ')
         .trim();
 
-      if (text === 'contributors') {
+      if (text === name.toLowerCase()) {
         return i;
       }
     }
